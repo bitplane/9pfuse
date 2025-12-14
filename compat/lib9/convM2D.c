@@ -31,7 +31,7 @@ statcheck(uchar *buf, uint nbuf)
 static char nullstring[] = "";
 
 uint
-convM2D(uchar *buf, uint nbuf, Dir *d, char *strs)
+convM2Du(uchar *buf, uint nbuf, Dir *d, char *strs, int dotu)
 {
 	uchar *p, *ebuf;
 	char *sv[5];
@@ -63,7 +63,7 @@ convM2D(uchar *buf, uint nbuf, Dir *d, char *strs)
 	d->length = GBIT64(p);
 	p += BIT64SZ;
 
-	nstr = 4;
+	nstr = dotu ? 5 : 4;
 	for(i = 0; i < nstr; i++){
 		if(p + BIT16SZ > ebuf)
 			return 0;
@@ -85,7 +85,7 @@ convM2D(uchar *buf, uint nbuf, Dir *d, char *strs)
 		d->uid = sv[1];
 		d->gid = sv[2];
 		d->muid = sv[3];
-		d->ext = nullstring;
+		d->ext = dotu ? sv[4] : nullstring;
 	}else{
 		d->name = nullstring;
 		d->uid = nullstring;
@@ -94,5 +94,27 @@ convM2D(uchar *buf, uint nbuf, Dir *d, char *strs)
 		d->ext = nullstring;
 	}
 
+	/* Parse .u numeric fields */
+	if(dotu){
+		if(p + 3*BIT32SZ > ebuf)
+			return 0;
+		d->uidnum = GBIT32(p);
+		p += BIT32SZ;
+		d->gidnum = GBIT32(p);
+		p += BIT32SZ;
+		d->muidnum = GBIT32(p);
+		p += BIT32SZ;
+	}else{
+		d->uidnum = ~0;
+		d->gidnum = ~0;
+		d->muidnum = ~0;
+	}
+
 	return p - buf;
+}
+
+uint
+convM2D(uchar *buf, uint nbuf, Dir *d, char *strs)
+{
+	return convM2Du(buf, nbuf, d, strs, 0);
 }

@@ -121,6 +121,9 @@ int	statcheck(uchar *abuf, uint nbuf);
 uint	convM2D(uchar*, uint, Dir*, char*);
 uint	convD2M(Dir*, uchar*, uint);
 uint	sizeD2M(Dir*);
+uint	convM2Du(uchar*, uint, Dir*, char*, int dotu);
+uint	convD2Mu(Dir*, uchar*, uint, int dotu);
+uint	sizeD2Mu(Dir*, int dotu);
 
 int	fcallfmt(Fmt*);
 int	dirfmt(Fmt*);

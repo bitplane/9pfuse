@@ -53,6 +53,7 @@ Qid	fsqid(CFid*);
 CFid	*fswalk(CFid*, char*);
 int fsfopen(CFid*, int);
 int fsfcreate(CFid*, char*, int, ulong);
+int fsfcreateu(CFid*, char*, int, ulong, char*);
 
 extern int chatty9pclient;
 extern int eofkill9pclient;

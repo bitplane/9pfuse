@@ -14,6 +14,7 @@ void *_fsnbqrecv(Queue*);
 struct CFsys
 {
 	char version[20];
+	int dotu;	/* 1 if using 9P2000.u */
 	int msize;
 	QLock lk;
 	int fd;

@@ -7,7 +7,7 @@
 #include "fsimpl.h"
 
 static long
-dirpackage(uchar *buf, long ts, Dir **d)
+dirpackage(uchar *buf, long ts, Dir **d, int dotu)
 {
 	char *s;
 	long ss, i, n, nn, m;
@@ -43,7 +43,7 @@ dirpackage(uchar *buf, long ts, Dir **d)
 	nn = 0;
 	for(i = 0; i < ts; i += m){
 		m = BIT16SZ + GBIT16((uchar*)&buf[i]);
-		if(nn >= n || convM2D(&buf[i], m, *d + nn, s) != m){
+		if(nn >= n || convM2Du(&buf[i], m, *d + nn, s, dotu) != m){
 			free(*d);
 			*d = nil;
 			return -1;
@@ -66,7 +66,7 @@ fsdirread(CFid *fid, Dir **d)
 		return -1;
 	ts = fsread(fid, buf, DIRMAX);
 	if(ts >= 0)
-		ts = dirpackage(buf, ts, d);
+		ts = dirpackage(buf, ts, d, fid->fs->dotu);
 	free(buf);
 	return ts;
 }
@@ -92,7 +92,7 @@ fsdirreadall(CFid *fid, Dir **d)
 		ts += n;
 	}
 	if(ts >= 0){
-		ts = dirpackage(buf, ts, d);
+		ts = dirpackage(buf, ts, d, fid->fs->dotu);
 		if(ts < 0)
 			werrstr("malformed directory contents");
 	}
