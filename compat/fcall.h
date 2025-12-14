@@ -116,6 +116,9 @@ enum
 uint	convM2S(uchar*, uint, Fcall*);
 uint	convS2M(Fcall*, uchar*, uint);
 uint	sizeS2M(Fcall*);
+uint	convM2Su(uchar*, uint, Fcall*, int dotu);
+uint	convS2Mu(Fcall*, uchar*, uint, int dotu);
+uint	sizeS2Mu(Fcall*, int dotu);
 
 int	statcheck(uchar *abuf, uint nbuf);
 uint	convM2D(uchar*, uint, Dir*, char*);

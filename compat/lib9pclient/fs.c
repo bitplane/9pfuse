@@ -207,7 +207,7 @@ _fsrpc(CFsys *fs, Fcall *tx, Fcall *rx, void **freep)
 	int n, nn;
 	void *tpkt, *rpkt;
 
-	n = sizeS2M(tx);
+	n = sizeS2Mu(tx, fs->dotu);
 	tpkt = malloc(n);
 	if(freep)
 		*freep = nil;
@@ -216,10 +216,10 @@ _fsrpc(CFsys *fs, Fcall *tx, Fcall *rx, void **freep)
 	tx->tag = 0;
 	if(chatty9pclient)
 		fprint(2, "<- %F\n", tx);
-	nn = convS2M(tx, tpkt, n);
+	nn = convS2Mu(tx, tpkt, n, fs->dotu);
 	if(nn != n){
 		free(tpkt);
-		werrstr("lib9pclient: sizeS2M convS2M mismatch");
+		werrstr("lib9pclient: sizeS2Mu convS2Mu mismatch");
 		fprint(2, "%r\n");
 		return -1;
 	}
@@ -230,10 +230,10 @@ _fsrpc(CFsys *fs, Fcall *tx, Fcall *rx, void **freep)
 		return -1;
 	}
 	n = GBIT32((uchar*)rpkt);
-	nn = convM2S(rpkt, n, rx);
+	nn = convM2Su(rpkt, n, rx, fs->dotu);
 	if(nn != n){
 		free(rpkt);
-		werrstr("lib9pclient: convM2S packet size mismatch %d %d", n, nn);
+		werrstr("lib9pclient: convM2Su packet size mismatch %d %d", n, nn);
 		fprint(2, "%r\n");
 		return -1;
 	}

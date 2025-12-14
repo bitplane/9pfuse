@@ -46,7 +46,7 @@ stringsz(char *s)
 }
 
 uint
-sizeS2M(Fcall *f)
+sizeS2Mu(Fcall *f, int dotu)
 {
 	uint n;
 	int i;
@@ -74,6 +74,8 @@ sizeS2M(Fcall *f)
 		n += BIT32SZ;
 		n += stringsz(f->uname);
 		n += stringsz(f->aname);
+		if(dotu)
+			n += BIT32SZ;	/* n_uname */
 		break;
 
 	case Tattach:
@@ -81,6 +83,8 @@ sizeS2M(Fcall *f)
 		n += BIT32SZ;
 		n += stringsz(f->uname);
 		n += stringsz(f->aname);
+		if(dotu)
+			n += BIT32SZ;	/* n_uname */
 		break;
 
 	case Twalk:
@@ -102,6 +106,8 @@ sizeS2M(Fcall *f)
 		n += stringsz(f->name);
 		n += BIT32SZ;
 		n += BIT8SZ;
+		if(dotu)
+			n += stringsz(f->extension);
 		break;
 
 	case Tread:
@@ -141,6 +147,8 @@ sizeS2M(Fcall *f)
 
 	case Rerror:
 		n += stringsz(f->ename);
+		if(dotu)
+			n += BIT32SZ;	/* errno */
 		break;
 
 	case Rflush:
@@ -198,12 +206,18 @@ sizeS2M(Fcall *f)
 }
 
 uint
-convS2M(Fcall *f, uchar *ap, uint nap)
+sizeS2M(Fcall *f)
+{
+	return sizeS2Mu(f, 0);
+}
+
+uint
+convS2Mu(Fcall *f, uchar *ap, uint nap, int dotu)
 {
 	uchar *p;
 	uint i, size;
 
-	size = sizeS2M(f);
+	size = sizeS2Mu(f, dotu);
 	if(size == 0)
 		return 0;
 	if(size > nap)
@@ -239,6 +253,10 @@ convS2M(Fcall *f, uchar *ap, uint nap)
 		p += BIT32SZ;
 		p  = pstring(p, f->uname);
 		p  = pstring(p, f->aname);
+		if(dotu){
+			PBIT32(p, f->uidnum);
+			p += BIT32SZ;
+		}
 		break;
 
 	case Tattach:
@@ -248,6 +266,10 @@ convS2M(Fcall *f, uchar *ap, uint nap)
 		p += BIT32SZ;
 		p  = pstring(p, f->uname);
 		p  = pstring(p, f->aname);
+		if(dotu){
+			PBIT32(p, f->uidnum);
+			p += BIT32SZ;
+		}
 		break;
 
 	case Twalk:
@@ -279,6 +301,8 @@ convS2M(Fcall *f, uchar *ap, uint nap)
 		p += BIT32SZ;
 		PBIT8(p, f->mode);
 		p += BIT8SZ;
+		if(dotu)
+			p = pstring(p, f->extension);
 		break;
 
 	case Tread:
@@ -331,6 +355,10 @@ convS2M(Fcall *f, uchar *ap, uint nap)
 
 	case Rerror:
 		p = pstring(p, f->ename);
+		if(dotu){
+			PBIT32(p, f->errornum);
+			p += BIT32SZ;
+		}
 		break;
 
 	case Rflush:
@@ -396,4 +424,10 @@ convS2M(Fcall *f, uchar *ap, uint nap)
 	if(size != p-ap)
 		return 0;
 	return size;
+}
+
+uint
+convS2M(Fcall *f, uchar *ap, uint nap)
+{
+	return convS2Mu(f, ap, nap, 0);
 }
