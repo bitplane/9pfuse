@@ -1172,6 +1172,8 @@ fuserename(FuseMsg *m)
 	char *before, *after;
 	CFid *fid, *newfid;
 	Dir d;
+	Qid qid;
+	int i;
 
 	in = m->tx;
 	if(in->newdir != m->hdr->nodeid){
@@ -1192,6 +1194,9 @@ fuserename(FuseMsg *m)
 		replyfuseerrstr(m);
 		return;
 	}
+	/* Save QID before wstat - needed to find cached Fusefids */
+	qid = fsqid(newfid);
+
 	nulldir(&d);
 	d.name = after;
 	if(fsdirfwstat(newfid, &d) < 0){
@@ -1199,7 +1204,28 @@ fuserename(FuseMsg *m)
 		fsclose(newfid);
 		return;
 	}
-	fsclose(newfid);
+
+	/*
+	 * After successful rename, newfid's server-side path is updated.
+	 * Find any cached Fusefid for this file (same QID) and swap in
+	 * the updated newfid to prevent stale path errors.
+	 */
+	for(i = 0; i < nfusefid; i++){
+		Fusefid *ff = fusefid[i];
+		if(ff && ff->isnodeid == 1 && ff->fid && ff->fid != newfid){
+			Qid oldqid = fsqid(ff->fid);
+			if(oldqid.path == qid.path && oldqid.type == qid.type){
+				/* Found cached Fusefid - swap in newfid */
+				fsclose(ff->fid);
+				ff->fid = newfid;
+				newfid = nil;
+				break;
+			}
+		}
+	}
+
+	if(newfid)
+		fsclose(newfid);
 	replyfuse(m, nil, 0);
 }
 
