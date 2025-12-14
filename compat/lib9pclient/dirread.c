@@ -23,7 +23,7 @@ dirpackage(uchar *buf, long ts, Dir **d, int dotu)
 	n = 0;
 	for(i = 0; i < ts; i += m){
 		m = BIT16SZ + GBIT16(&buf[i]);
-		if(statcheck(&buf[i], m) < 0)
+		if(statchecku(&buf[i], m, dotu) < 0)
 			break;
 		ss += m;
 		n++;

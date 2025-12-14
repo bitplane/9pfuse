@@ -3,29 +3,43 @@
 #include	<fcall.h>
 
 int
-statcheck(uchar *buf, uint nbuf)
+statchecku(uchar *buf, uint nbuf, int dotu)
 {
 	uchar *ebuf;
 	int i, nstr;
+	uint fixlen;
 
 	ebuf = buf + nbuf;
+	fixlen = dotu ? STATFIXLENU : STATFIXLEN;
 
-	if(nbuf < STATFIXLEN || nbuf != BIT16SZ + GBIT16(buf))
+	if(nbuf < fixlen || nbuf != BIT16SZ + GBIT16(buf))
 		return -1;
 
+	/* Skip past fixed portion to the first string length field */
+	/* Fixed portion minus the string length fields and .u numeric fields */
 	buf += STATFIXLEN - 4 * BIT16SZ;
 
-	nstr = 4;
+	nstr = dotu ? 5 : 4;
 	for(i = 0; i < nstr; i++){
 		if(buf + BIT16SZ > ebuf)
 			return -1;
 		buf += BIT16SZ + GBIT16(buf);
 	}
 
+	/* Skip .u numeric fields */
+	if(dotu)
+		buf += 3 * BIT32SZ;
+
 	if(buf != ebuf)
 		return -1;
 
 	return 0;
+}
+
+int
+statcheck(uchar *buf, uint nbuf)
+{
+	return statchecku(buf, nbuf, 0);
 }
 
 static char nullstring[] = "";
