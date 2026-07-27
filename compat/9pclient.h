@@ -14,6 +14,7 @@ typedef struct CFid CFid;
 
 CFsys *fsinit(int);
 CFsys *fsmount(int, char*);
+int fssetmaxrpc(CFsys*, uint);
 
 int fsversion(CFsys*, int, char*, int);
 CFid *fsauth(CFsys*, char*, char*);

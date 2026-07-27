@@ -87,11 +87,12 @@ double entrytimeout = 1.0;
 CFsys *fsys;
 CFid *fsysroot;
 void init9p(char*, char*);
+uint maxrpc = 256;
 
 void
 usage(void)
 {
-	fprint(2, "usage: 9pfuse [-D] [-A attrtimeout] [-a aname] address mtpt\n");
+	fprint(2, "usage: 9pfuse [-D] [-A attrtimeout] [-a aname] [-n maxrpc] address mtpt\n");
 	exit(1);
 }
 
@@ -117,6 +118,11 @@ threadmain(int argc, char **argv)
 		break;
 	case 'a':
 		aname = EARGF(usage());
+		break;
+	case 'n':
+		maxrpc = atoi(EARGF(usage()));
+		if(maxrpc < 1 || maxrpc > 256)
+			usage();
 		break;
 	default:
 		usage();
@@ -173,6 +179,8 @@ init9p(char *addr, char *spec)
 	proccreate(watchfd, (void*)(uintptr)fd, STACK);
 	if((fsys = fsmount(fd, spec)) == nil)
 		sysfatal("fsmount: %r");
+	if(fssetmaxrpc(fsys, maxrpc) < 0)
+		sysfatal("fssetmaxrpc: %r");
 	fsysroot = fsroot(fsys);
 }
 
