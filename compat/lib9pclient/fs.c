@@ -67,6 +67,24 @@ fsroot(CFsys *fs)
 	return fs->root;
 }
 
+int
+fssetmaxrpc(CFsys *fs, uint maxrpc)
+{
+	if(maxrpc == 0 || maxrpc > 65535){
+		werrstr("maximum outstanding RPCs must be between 1 and 65535");
+		return -1;
+	}
+	qlock(&fs->mux.lk);
+	if(fs->mux.nwait != 0){
+		qunlock(&fs->mux.lk);
+		werrstr("cannot change maximum RPCs while requests are outstanding");
+		return -1;
+	}
+	fs->mux.maxtag = fs->mux.mintag + maxrpc;
+	qunlock(&fs->mux.lk);
+	return 0;
+}
+
 CFsys*
 fsmount(int fd, char *aname)
 {

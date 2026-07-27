@@ -14,6 +14,10 @@
 .B -a
 .I aname
 ]
+[
+.B -n
+.I maxrpc
+]
 .I addr
 .I mtpt
 .SH DESCRIPTION
@@ -44,6 +48,10 @@ Set the kernel cache timeout for attribute information
 to 
 .I t
 (default 1.0) seconds.
+.TP
+.B -n\fI maxrpc
+Limit the number of outstanding 9P requests. The default is 256.
+Use 1 for transports which cannot reliably carry concurrent requests.
 .PD
 .PP
 The
