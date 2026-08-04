@@ -23,26 +23,6 @@
 #define O_DIRECTORY 0
 #endif
 
-#ifndef O_LARGEFILE
-#  define O_LARGEFILE 0
-#endif
-
-/*
- * Work around glibc's broken <bits/fcntl.h> which defines
- * O_LARGEFILE to 0 on 64 bit architectures.  But, on those same
- * architectures, linux _forces_ O_LARGEFILE (which is always
- * 0100000 in the kernel) at each file open. FUSE is all too
- * happy to pass the flag onto us, where we'd have no idea what
- * to do with it if we trusted glibc.
- *
- * On ARM however, the O_LARGEFILE is set correctly.
- */
-
-#if defined(__linux__) && !defined(__arm__)
-#  undef O_LARGEFILE
-#  define O_LARGEFILE 0100000
-#endif
-
 #ifndef O_CLOEXEC
 #  if defined(__linux__)
 #    define O_CLOEXEC 02000000  /* Sigh */
@@ -62,6 +42,7 @@
 int debug;
 char *argv0;
 char *aname = "";
+uint kernelolargefile(void);
 void fusedispatch(void*);
 Channel *fusechan;
 
@@ -597,14 +578,10 @@ _fuseopen(FuseMsg *m, int isdir)
 	flags = in->flags;
 	openmode = flags&3;
 	flags &= ~3;
-	flags &= ~(O_DIRECTORY|O_NONBLOCK|O_LARGEFILE|O_CLOEXEC|FMODE_EXEC);
+	flags &= ~(O_DIRECTORY|O_NONBLOCK|kernelolargefile()|O_CLOEXEC|FMODE_EXEC);
 #ifdef O_NOFOLLOW
 	flags &= ~O_NOFOLLOW;
 #endif
-#ifdef O_LARGEFILE
-	flags &= ~O_LARGEFILE;
-#endif
-
 	/*
 	 * Discarding O_APPEND here is not completely wrong,
 	 * because the host kernel will rewrite the offsets
@@ -798,7 +775,7 @@ fusecreate(FuseMsg *m)
 	flags = in->flags;
 	openmode = in->flags&3;
 	flags &= ~3;
-	flags &= ~(O_DIRECTORY|O_NONBLOCK|O_LARGEFILE|O_EXCL);
+	flags &= ~(O_DIRECTORY|O_NONBLOCK|kernelolargefile()|O_EXCL);
 	flags &= ~O_APPEND;	/* see comment in _fuseopen */
 	flags &= ~(O_CREAT|O_TRUNC);	/* huh? */
 	if(flags){
