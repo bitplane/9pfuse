@@ -723,6 +723,68 @@ fusemkdir(FuseMsg *m)
 	replyfuse(m, &out, sizeof out);
 }
 
+/*
+ * Symlink.  Create a symbolic link.
+ * The request contains two strings: the name and the target.
+ */
+void
+fusesymlink(FuseMsg *m)
+{
+	char *target, *name;
+	Fusefid *ff;
+	CFid *fid, *newfid, *newfid2;
+	Dir *d;
+	int err;
+	struct fuse_entry_out out;
+
+	name = m->tx;
+	target = name + strlen(name) + 1;
+
+	if((fid = nodeid2fid(m->hdr->nodeid)) == nil){
+		replyfuseerrno(m, ESTALE);
+		return;
+	}
+	if(strchr(name, '/')){
+		replyfuseerrno(m, ENOENT);
+		return;
+	}
+	if((newfid = fswalk(fid, nil)) == nil){
+		replyfuseerrstr(m);
+		return;
+	}
+	/* Create symlink with DMSYMLINK and target in extension field */
+	if(fsfcreateu(newfid, name, OREAD, DMSYMLINK|0777, target) < 0){
+		replyfuseerrstr(m);
+		fsclose(newfid);
+		return;
+	}
+	if((d = fsdirfstat(newfid)) == nil){
+		err = errstr2errno();
+		fsfremove(newfid);
+		replyfuseerrno(m, err);
+		return;
+	}
+	/*
+	 * The fid is open; we need an unopened one.
+	 */
+	if((newfid2 = fswalk(fid, name)) == nil){
+		err = errstr2errno();
+		free(d);
+		fsfremove(newfid);
+		replyfuseerrno(m, err);
+		return;
+	}
+	fsclose(newfid);
+	out.nodeid = allocnodeid(newfid2);
+	ff = lookupfusefid(out.nodeid, 1);
+	out.generation = ff->gen;
+	f2timeout(attrtimeout, &out.attr_valid, &out.attr_valid_nsec);
+	f2timeout(entrytimeout, &out.entry_valid, &out.entry_valid_nsec);
+	dir2attr(d, &out.attr);
+	free(d);
+	replyfuse(m, &out, sizeof out);
+}
+
 void
 fusecreate(FuseMsg *m)
 {
@@ -1205,8 +1267,9 @@ struct {
 	{ FUSE_GETATTR,		fusegetattr },
 	{ FUSE_SETATTR,		fusesetattr },
 	/*
-	 * FUSE_SYMLINK, FUSE_MKNOD are unimplemented.
+	 * FUSE_MKNOD is unimplemented.
 	 */
+	{ FUSE_SYMLINK,		fusesymlink },
 	{ FUSE_READLINK,	fusereadlink },
 	{ FUSE_MKDIR,		fusemkdir },
 	{ FUSE_UNLINK,		fuseunlink },

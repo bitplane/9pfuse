@@ -21,6 +21,23 @@ fsfcreate(CFid *fid, char *name, int mode, ulong perm)
 	return 0;
 }
 
+int
+fsfcreateu(CFid *fid, char *name, int mode, ulong perm, char *ext)
+{
+	Fcall tx, rx;
+
+	tx.type = Tcreate;
+	tx.name = name;
+	tx.fid = fid->fid;
+	tx.mode = mode;
+	tx.perm = perm;
+	tx.extension = ext;
+	if(_fsrpc(fid->fs, &tx, &rx, 0) < 0)
+		return -1;
+	fid->mode = mode;
+	return 0;
+}
+
 CFid*
 fscreate(CFsys *fs, char *name, int mode, ulong perm)
 {
