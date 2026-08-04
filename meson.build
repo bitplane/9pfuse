@@ -49,6 +49,7 @@ endif
 executable('9pfuse',
   'errstr.c',
   'fuse.c',
+  'kernel_flags.c',
   'main.c',
   'main_p9main.c',
   'compat/fmt/dofmt.c',
