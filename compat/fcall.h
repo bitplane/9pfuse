@@ -43,8 +43,8 @@ struct	Fcall
 	int	unixfd;		/* Ropenfd */
 	
 	/* 9P2000.u extensions */
-	int	errornum;	/* Rerror */
-	int	uidnum;		/* Tattach, Tauth */
+	u32int	errornum;	/* Rerror */
+	u32int	uidnum;		/* Tattach, Tauth */
 	char	*extension;	/* Tcreate */
 } Fcall;
 
@@ -116,11 +116,18 @@ enum
 uint	convM2S(uchar*, uint, Fcall*);
 uint	convS2M(Fcall*, uchar*, uint);
 uint	sizeS2M(Fcall*);
+uint	convM2Su(uchar*, uint, Fcall*, int dotu);
+uint	convS2Mu(Fcall*, uchar*, uint, int dotu);
+uint	sizeS2Mu(Fcall*, int dotu);
 
 int	statcheck(uchar *abuf, uint nbuf);
+int	statchecku(uchar *abuf, uint nbuf, int dotu);
 uint	convM2D(uchar*, uint, Dir*, char*);
 uint	convD2M(Dir*, uchar*, uint);
 uint	sizeD2M(Dir*);
+uint	convM2Du(uchar*, uint, Dir*, char*, int dotu);
+uint	convD2Mu(Dir*, uchar*, uint, int dotu);
+uint	sizeD2Mu(Dir*, int dotu);
 
 int	fcallfmt(Fmt*);
 int	dirfmt(Fmt*);

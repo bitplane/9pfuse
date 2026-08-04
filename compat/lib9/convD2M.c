@@ -3,7 +3,7 @@
 #include	<fcall.h>
 
 uint
-sizeD2M(Dir *d)
+sizeD2Mu(Dir *d, int dotu)
 {
 	char *sv[5];
 	int i, ns, nstr, fixlen;
@@ -12,9 +12,10 @@ sizeD2M(Dir *d)
 	sv[1] = d->uid;
 	sv[2] = d->gid;
 	sv[3] = d->muid;
+	sv[4] = d->ext;
 
-	fixlen = STATFIXLEN;
-	nstr = 4;
+	fixlen = dotu ? STATFIXLENU : STATFIXLEN;
+	nstr = dotu ? 5 : 4;
 
 	ns = 0;
 	for(i = 0; i < nstr; i++)
@@ -25,7 +26,13 @@ sizeD2M(Dir *d)
 }
 
 uint
-convD2M(Dir *d, uchar *buf, uint nbuf)
+sizeD2M(Dir *d)
+{
+	return sizeD2Mu(d, 0);
+}
+
+uint
+convD2Mu(Dir *d, uchar *buf, uint nbuf, int dotu)
 {
 	uchar *p, *ebuf;
 	char *sv[5];
@@ -41,9 +48,10 @@ convD2M(Dir *d, uchar *buf, uint nbuf)
 	sv[1] = d->uid;
 	sv[2] = d->gid;
 	sv[3] = d->muid;
+	sv[4] = d->ext;
 
-	fixlen = STATFIXLEN;
-	nstr = 4;
+	fixlen = dotu ? STATFIXLENU : STATFIXLEN;
+	nstr = dotu ? 5 : 4;
 
 	ns = 0;
 	for(i = 0; i < nstr; i++){
@@ -56,7 +64,7 @@ convD2M(Dir *d, uchar *buf, uint nbuf)
 
 	ss = fixlen + ns;
 
-	/* set size befor erroring, so user can know how much is needed */
+	/* set size before erroring, so user can know how much is needed */
 	/* note that length excludes count field itself */
 	PBIT16(p, ss-BIT16SZ);
 	p += BIT16SZ;
@@ -94,8 +102,26 @@ convD2M(Dir *d, uchar *buf, uint nbuf)
 		p += ns;
 	}
 
+	/* Encode .u numeric fields */
+	if(dotu){
+		if(p + 3*BIT32SZ > ebuf)
+			return 0;
+		PBIT32(p, d->uidnum);
+		p += BIT32SZ;
+		PBIT32(p, d->gidnum);
+		p += BIT32SZ;
+		PBIT32(p, d->muidnum);
+		p += BIT32SZ;
+	}
+
 	if(ss != p - buf)
 		return 0;
 
 	return p - buf;
+}
+
+uint
+convD2M(Dir *d, uchar *buf, uint nbuf)
+{
+	return convD2Mu(d, buf, nbuf, 0);
 }
