@@ -328,7 +328,7 @@ dir2attr(Dir *d, struct fuse_attr *attr)
 {
 	attr->ino = qid2inode(d->qid);
 	attr->size = d->length;
-	attr->blocks = (d->length+8191)/8192;
+	attr->blocks = (d->length+511)/512; /* Linux uses 512b blocks regardless */
 	attr->atime = d->atime;
 	attr->mtime = d->mtime;
 	attr->ctime = d->mtime;	/* not right */
